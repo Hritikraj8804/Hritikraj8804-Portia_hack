@@ -1,8 +1,5 @@
 import streamlit as st
 import requests
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 from datetime import datetime
 import time
 
@@ -111,17 +108,14 @@ def main():
     # Pipeline status visualization
     st.subheader("📊 Pipeline Status Overview")
     
-    # Create status chart
-    status_data = pd.DataFrame({
-        'Status': ['Success', 'Failed', 'Running'],
-        'Count': [success_count, failed_count, running_count],
-        'Color': ['#2ca02c', '#d62728', '#ff7f0e']
-    })
-    
-    fig = px.pie(status_data, values='Count', names='Status', 
-                 color_discrete_sequence=['#2ca02c', '#d62728', '#ff7f0e'])
-    fig.update_layout(height=300)
-    st.plotly_chart(fig, use_container_width=True)
+    # Simple status display
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("✅ Success", success_count, delta=None)
+    with col2:
+        st.metric("❌ Failed", failed_count, delta=None)
+    with col3:
+        st.metric("🔄 Running", running_count, delta=None)
     
     # Pipeline details
     st.subheader("🔍 Pipeline Details")

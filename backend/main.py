@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
-import json
 
 app = FastAPI(title="DevOps Pipeline API", version="1.0.0")
 
