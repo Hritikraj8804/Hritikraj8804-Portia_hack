@@ -32,9 +32,9 @@ Run the test script:
 In Portia Labs dashboard, set these environment variables:
 
 ```
-GOOGLE_API_KEY=AIzaSyDFsQzAnjsGeT0Mz91sWjLU4waQLWUkEgc
+GOOGLE_API_KEY=your-google-api-key
 API_BASE_URL=http://localhost:8000
-API_AUTH_TOKEN=demo-secure-token-123
+API_AUTH_TOKEN=your-API_AUTH_TOKEN
 ```
 
 ## Step 4: Test Agents

@@ -215,50 +215,21 @@ def main():
             st.session_state.messages.append({"role": "assistant", "content": response})
 
 def generate_ai_response(prompt, pipelines):
-    """Generate AI response based on prompt and pipeline data"""
-    prompt_lower = prompt.lower()
-    
-    # Simple rule-based responses for demo
-    if "status" in prompt_lower or "check" in prompt_lower:
-        failed_pipelines = [p for p in pipelines if p["status"] == "failed"]
-        if failed_pipelines:
-            response = f"I found {len(failed_pipelines)} failed pipeline(s):\n\n"
-            for p in failed_pipelines:
-                response += f"❌ **{p['name']}**: Failed at {p['stage']} stage\n"
-                if p.get('error'):
-                    response += f"   Error: {p['error']}\n"
-                response += f"   **Recommendation**: Try retry first, then consider rollback if issue persists.\n\n"
+    """Generate enhanced AI response for demo"""
+    try:
+        # Use working Portia integration
+        from working_portia import working_assistant
+        result = working_assistant.analyze_devops_issue(prompt)
+        if result['success']:
+            return f"🤖 **Portia AI Analysis:**\n\n{result['response']}\n\n*Plan ID: {result['plan_id']}*"
         else:
-            response = "✅ All pipelines are healthy! No failed pipelines detected."
-    
-    elif "failed" in prompt_lower or "error" in prompt_lower:
-        failed_pipelines = [p for p in pipelines if p["status"] == "failed"]
-        if failed_pipelines:
-            p = failed_pipelines[0]  # Focus on first failed pipeline
-            response = f"The **{p['name']}** pipeline failed at the **{p['stage']}** stage.\n\n"
-            if p.get('error'):
-                response += f"**Error**: {p['error']}\n\n"
-            response += "**My recommendations**:\n"
-            response += "1. 🔄 **Retry**: If this looks like a temporary issue\n"
-            response += "2. ⏪ **Rollback**: If there are code-related problems\n"
-            response += "3. 🚨 **Escalate**: If you need DevOps team assistance\n\n"
-            response += "Would you like me to execute any of these actions?"
-        else:
-            response = "I don't see any failed pipelines currently. All systems appear to be running normally."
-    
-    elif "retry" in prompt_lower:
-        response = "I can help you retry failed pipelines. Use the retry buttons above, or let me know which specific pipeline you'd like to retry."
-    
-    elif "rollback" in prompt_lower:
-        response = "Rollback will revert to the previous stable version. This is recommended when:\n- New code changes are causing issues\n- Tests are failing due to recent commits\n- You need to quickly restore service\n\nWhich pipeline would you like to rollback?"
-    
-    elif "escalate" in prompt_lower:
-        response = "Escalation will notify the DevOps team. This is recommended when:\n- Infrastructure issues are suspected\n- Multiple retries have failed\n- You need expert assistance\n\nI can escalate any pipeline issue for you."
-    
-    else:
-        response = "I can help you with:\n- 📊 Checking pipeline status\n- 🔍 Analyzing failures and errors\n- 🛠️ Recommending actions (retry/rollback/escalate)\n- 📋 Viewing detailed logs\n\nWhat specific help do you need with your pipelines?"
-    
-    return response
+            # Fallback to enhanced responses
+            from demo_ready import get_smart_response
+            return get_smart_response(prompt, pipelines)
+    except:
+        # Basic fallback
+        return "I'm your DevOps AI Assistant. I can help with pipeline status, troubleshooting, and recommendations. What would you like to know?"
+
 
 if __name__ == "__main__":
     main()
