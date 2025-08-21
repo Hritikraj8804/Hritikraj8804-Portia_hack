@@ -9,7 +9,7 @@ class PortiaClient:
     """Client to interact with Portia Labs agents"""
     
     def __init__(self):
-        self.api_key = os.getenv("PORTIA_API_KEY", "prt-iz5AmjCu.FzvTZUUscHNDAEBYz3qU5VssiJXoeXaA")
+        self.api_key = os.getenv("PORTIA_API_KEY")
         self.base_url = "https://api.portialabs.ai"  # Replace with actual Portia API URL
         
     def query_execution_agent(self, query: str) -> Optional[str]:
