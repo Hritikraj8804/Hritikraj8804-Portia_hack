@@ -1,17 +1,15 @@
-# Portia SDK Integration Guide
+# Portia Integration Guide
 
-## How Portia Actually Works
-Portia doesn't use file uploads. Instead, you use the **Portia SDK** to create and run plans programmatically.
+## Current Implementation
+The project uses Portia SDK with `working_portia.py` for real AI responses.
 
-## Step 1: Verify API Keys
-Make sure your `.env` file has:
-```
-GOOGLE_API_KEY=your-google-api-key
-PORTIA_API_KEY=your-portia-api-key
+## Test Integration
+```bash
+python working_portia.py
 ```
 
-## Step 2: Test Portia Integration
-Run the test script:
+## Check Dashboard
+View your plans at: https://app.portialabs.ai/dashboard/plan-runs
 
 ### 1. DevOps Execution Agent
 - **File**: `portia-agents/devops-execution-agent.py`
