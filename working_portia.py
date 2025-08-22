@@ -1,6 +1,7 @@
 """
 Working Portia integration for DevOps Assistant
 """
+import os
 from dotenv import load_dotenv
 from portia import Portia, Config
 from portia.open_source_tools.registry import example_tool_registry
@@ -12,20 +13,38 @@ class WorkingPortiaAssistant:
         # Use working configuration
         self.config = Config.from_default(llm_provider="google")
         self.portia = Portia(config=self.config, tools=example_tool_registry)
+        
+        # Repository configuration
+        self.repo_owner = os.getenv("GITHUB_REPO_OWNER", "hriti")
+        self.repo_name = os.getenv("GITHUB_REPO_NAME", "portia")
+        self.repo_full_name = f"{self.repo_owner}/{self.repo_name}"
     
     def analyze_devops_issue(self, user_query):
         """Analyze DevOps issues using working Portia setup"""
         
-        # Simple query that works with available tools
+        # Enhanced query using available tools
         enhanced_query = f"""
-        You are a DevOps AI Assistant. Answer this question about CI/CD pipelines: {user_query}
+        You are an advanced DevOps AI Assistant helping with CI/CD pipeline management.
         
-        Provide recommendations from these options:
-        - RETRY: For temporary issues like timeouts or network problems
-        - ROLLBACK: For code-related problems or test failures  
-        - ESCALATE: For infrastructure or persistent issues
+        User Query: {user_query}
         
-        Give a clear, beginner-friendly explanation with your reasoning.
+        Repository Context:
+        - Repository: {self.repo_full_name} (GitHub)
+        - Project: DevOps AI Assistant
+        - CI/CD: GitHub Actions workflows
+        
+        Available tools:
+        - search_tool: Use to research DevOps solutions, pipeline troubleshooting, and best practices
+        - LLM Tool: For detailed analysis and recommendations
+        
+        For pipeline-related queries:
+        1. Use search_tool to research common solutions for the specific issue
+        2. Provide intelligent DevOps recommendations:
+           - RETRY: For temporary issues (network, timeouts, transient failures)
+           - ROLLBACK: For code-related problems or test failures  
+           - ESCALATE: For infrastructure issues or persistent problems
+        
+        Focus on actionable, beginner-friendly guidance with research-backed solutions.
         """
         
         try:
