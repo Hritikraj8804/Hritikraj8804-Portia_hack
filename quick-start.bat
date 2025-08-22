@@ -3,7 +3,7 @@ echo 🚀 Quick Start - DevOps AI Assistant
 echo.
 
 echo Starting backend server...
-start "Backend API" cmd /k "cd backend && python simple_server.py"
+start "Backend API" cmd /k "cd backend & python simple_server.py"
 
 timeout /t 3 /nobreak > nul
 
