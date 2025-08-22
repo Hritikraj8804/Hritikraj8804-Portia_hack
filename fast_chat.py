@@ -15,21 +15,41 @@ class FastGeminiChat:
             genai.configure(api_key=self.google_api_key)
             self.model = genai.GenerativeModel('gemini-1.5-flash')
         
-    def get_quick_response(self, user_query):
-        """Get fast response from Google Gemini"""
+    def get_quick_response(self, user_query, pipeline_context=None):
+        """Get fast response from Google Gemini with pipeline context"""
         
         try:
             if self.google_api_key:
                 print(f"⚡ Using Gemini API for: {user_query[:50]}...")
                 
-                # DevOps-focused prompt
+                # Add real pipeline context if available
+                context_info = ""
+                if pipeline_context:
+                    failed_pipelines = [p for p in pipeline_context if p.get('status') == 'failed']
+                    running_pipelines = [p for p in pipeline_context if p.get('status') == 'running']
+                    success_pipelines = [p for p in pipeline_context if p.get('status') == 'success']
+                    
+                    context_info = f"""
+                    
+                Current Pipeline Status:
+                - ✅ {len(success_pipelines)} successful pipelines
+                - ❌ {len(failed_pipelines)} failed pipelines
+                - 🔄 {len(running_pipelines)} running pipelines
+                
+                Failed Pipelines Details:
+                {chr(10).join([f"- {p['name']}: {p.get('error', 'Unknown error')}" for p in failed_pipelines[:2]])}
+                """
+                
+                # DevOps-focused prompt with real context
                 gemini_prompt = f"""
-                You are a DevOps AI Assistant. Provide a helpful, concise response (under 100 words) to this question:
+                You are a DevOps AI Assistant. Provide a helpful, concise response (under 150 words) to this question:
                 
                 {user_query}
+                {context_info}
                 
                 Context: CI/CD pipelines, troubleshooting, deployment issues.
                 Style: Friendly, actionable, beginner-friendly.
+                Use the real pipeline data above to give specific advice.
                 """
                 
                 response = self.model.generate_content(gemini_prompt)
@@ -157,6 +177,17 @@ What specific DevOps challenge can I help you solve? 💪"""
 
 # Global instance
 fast_chat = FastGeminiChat()
+
+def get_pipeline_context():
+    """Get current pipeline status for context"""
+    try:
+        import requests
+        response = requests.get("http://localhost:8000/pipelines", timeout=2)
+        if response.status_code == 200:
+            return response.json()
+    except:
+        pass
+    return None
 
 def test_fast_chat():
     """Test the fast chat system"""
