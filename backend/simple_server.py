@@ -3,40 +3,70 @@ import json
 from datetime import datetime
 from urllib.parse import urlparse, parse_qs
 
-# Mock pipeline data
-PIPELINES = {
-    "frontend-deploy": {
-        "id": "frontend-deploy",
-        "name": "Frontend Deployment",
-        "status": "success",
-        "stage": "deployment",
-        "last_run": "2024-01-15T10:30:00Z",
-        "duration": "5m 23s",
-        "commit": "abc123f",
-        "branch": "main"
-    },
-    "backend-api": {
-        "id": "backend-api", 
-        "name": "Backend API",
-        "status": "failed",
-        "stage": "testing",
-        "last_run": "2024-01-15T11:15:00Z",
-        "duration": "3m 45s",
-        "commit": "def456g",
-        "branch": "develop",
-        "error": "Test timeout after 300s - Database connection failed"
-    },
-    "database-migration": {
-        "id": "database-migration",
-        "name": "Database Migration", 
-        "status": "running",
-        "stage": "migration",
-        "last_run": "2024-01-15T11:45:00Z",
-        "progress": 80,
-        "commit": "ghi789h",
-        "branch": "main"
+# Import GitHub API for real data
+try:
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from github_api import github_api
+    USE_REAL_DATA = True
+except ImportError:
+    USE_REAL_DATA = False
+    print("GitHub API not available, using mock data")
+
+def get_pipelines_data():
+    """Get pipeline data from GitHub API or fallback to mock"""
+    if USE_REAL_DATA:
+        try:
+            pipelines = github_api.get_workflow_runs()
+            # Convert list to dict for compatibility
+            return {p['id']: p for p in pipelines}
+        except Exception as e:
+            print(f"GitHub API error: {e}")
+    
+    # Fallback mock data with repo info
+    repo_owner = os.getenv("GITHUB_REPO_OWNER", "Hritikraj8804")
+    repo_name = os.getenv("GITHUB_REPO_NAME", "devops-python-app")
+    
+    return {
+        "frontend-deploy": {
+            "id": "frontend-deploy",
+            "name": f"Frontend Deployment ({repo_name})",
+            "status": "success",
+            "stage": "deployment",
+            "last_run": "2024-01-15T10:30:00Z",
+            "duration": "5m 23s",
+            "commit": "abc123f",
+            "branch": "main",
+            "repository": f"{repo_owner}/{repo_name}"
+        },
+        "backend-api": {
+            "id": "backend-api", 
+            "name": f"Backend API ({repo_name})",
+            "status": "failed",
+            "stage": "testing",
+            "last_run": "2024-01-15T11:15:00Z",
+            "duration": "3m 45s",
+            "commit": "def456g",
+            "branch": "develop",
+            "error": "Test timeout after 300s - Database connection failed",
+            "repository": f"{repo_owner}/{repo_name}"
+        },
+        "database-migration": {
+            "id": "database-migration",
+            "name": f"Database Migration ({repo_name})", 
+            "status": "running",
+            "stage": "migration",
+            "last_run": "2024-01-15T11:45:00Z",
+            "progress": 80,
+            "commit": "ghi789h",
+            "branch": "main",
+            "repository": f"{repo_owner}/{repo_name}"
+        }
     }
-}
+
+# Get initial pipeline data
+PIPELINES = get_pipelines_data()
 
 class APIHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
@@ -63,7 +93,9 @@ class APIHandler(BaseHTTPRequestHandler):
                 "pipelines_count": len(PIPELINES)
             })
         elif path == "/pipelines":
-            self.send_json(list(PIPELINES.values()))
+            # Refresh data from GitHub API
+            pipelines_data = get_pipelines_data()
+            self.send_json(list(pipelines_data.values()))
         elif path.startswith("/pipelines/") and path.endswith("/logs"):
             pipeline_id = path.split("/")[2]
             if pipeline_id in PIPELINES:

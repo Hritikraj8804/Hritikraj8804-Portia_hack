@@ -117,6 +117,10 @@ def main():
     with col3:
         st.metric("🔄 Running", running_count, delta=None)
     
+    # Repository Info
+    if pipelines and pipelines[0].get('repository'):
+        st.info(f"📊 **Monitoring Repository:** {pipelines[0]['repository']}")
+    
     # Pipeline details
     st.subheader("🔍 Pipeline Details")
     
@@ -124,11 +128,13 @@ def main():
         status_emoji = {"success": "✅", "failed": "❌", "running": "🔄"}
         emoji = status_emoji.get(pipeline["status"], "❓")
         
-        with st.expander(f"{emoji} {pipeline['name']} - {pipeline['status'].upper()}"):
+        repo_info = f" ({pipeline.get('repository', 'Unknown')})" if pipeline.get('repository') else ""
+        with st.expander(f"{emoji} {pipeline['name']}{repo_info} - {pipeline['status'].upper()}"):
             col1, col2 = st.columns(2)
             
             with col1:
                 st.write(f"**ID:** {pipeline['id']}")
+                st.write(f"**Repository:** {pipeline.get('repository', 'Unknown')}")
                 st.write(f"**Stage:** {pipeline['stage']}")
                 st.write(f"**Branch:** {pipeline['branch']}")
                 st.write(f"**Commit:** {pipeline['commit']}")
