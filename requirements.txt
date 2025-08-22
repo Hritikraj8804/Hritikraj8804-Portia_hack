@@ -5,3 +5,4 @@ streamlit
 portia-sdk-python[google]
 python-dotenv
 httpx
+google-generativeai
