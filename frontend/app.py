@@ -215,20 +215,22 @@ def main():
             st.session_state.messages.append({"role": "assistant", "content": response})
 
 def generate_ai_response(prompt, pipelines):
-    """Generate enhanced AI response for demo"""
+    """Generate AI response using hybrid system"""
     try:
-        # Use working Portia integration
-        from working_portia import working_assistant
-        result = working_assistant.analyze_devops_issue(prompt)
-        if result['success']:
-            return f"🤖 **Portia AI Analysis:**\n\n{result['response']}\n\n*Plan ID: {result['plan_id']}*"
+        from workflow_manager import workflow_manager
+        
+        # Determine if complex workflow or simple chat
+        if workflow_manager.is_complex_workflow(prompt):
+            with st.spinner('🔧 Advanced AI workflow processing...'):
+                result = workflow_manager.process_query(prompt, pipelines)
         else:
-            # Fallback to enhanced responses
-            from demo_ready import get_smart_response
-            return get_smart_response(prompt, pipelines)
-    except:
-        # Basic fallback
-        return "I'm your DevOps AI Assistant. I can help with pipeline status, troubleshooting, and recommendations. What would you like to know?"
+            with st.spinner('⚡ AI responding...'):
+                result = workflow_manager.process_query(prompt, pipelines)
+        
+        return result['response']
+        
+    except Exception as e:
+        return "I'm your DevOps AI Assistant. I can help with pipeline status, troubleshooting, and intelligent recommendations. What would you like to know?"
 
 
 if __name__ == "__main__":
