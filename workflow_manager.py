@@ -2,8 +2,7 @@
 Workflow Manager - Decides between fast chat and complex Portia workflows
 """
 import re
-from fast_chat import fast_chat
-# Only import working_assistant when needed for complex workflows
+# All queries now go through Portia for consistent AI experience
 
 class WorkflowManager:
     def __init__(self):
@@ -60,56 +59,56 @@ class WorkflowManager:
         return False
     
     def process_query(self, user_query, pipelines=None):
-        """Route query to appropriate AI system"""
+        """Route all queries through Portia for consistent AI experience"""
         
-        if self.is_complex_workflow(user_query):
-            # Use Portia for complex workflows
-            print("🔧 Using Portia workflow...")
-            try:
-                # Lazy import to avoid Portia connection delay for simple queries
-                from working_portia import working_assistant
-                result = working_assistant.analyze_devops_issue(user_query)
-                if result['success']:
-                    return {
-                        'response': f"🤖 **Portia AI Workflow:**\n\n{result['response']}\n\n*Plan ID: {result['plan_id']}*",
-                        'type': 'workflow',
-                        'plan_id': result['plan_id']
-                    }
-                else:
-                    # Show clean response instead of raw error
-                    return {
-                        'response': "🔧 **Portia Analysis:** I've processed your pipeline query. While GitHub tools are temporarily limited, I recommend checking your repository directly for workflow status. Use the dashboard above for immediate actions or ask me specific questions about pipeline issues.",
-                        'type': 'workflow_fallback'
-                    }
-            except Exception as e:
-                # Still try to get Portia response even if tools fail
-                try:
-                    from working_portia import working_assistant
-                    result = working_assistant.analyze_devops_issue(user_query)
-                    if result.get('response'):
-                        return {
-                            'response': f"🤖 **Portia AI (Tools Limited):**\n\n{result['response']}",
-                            'type': 'portia_limited'
-                        }
-                except:
-                    pass
+        print("🤖 Using Portia AI for all queries...")
+        
+        try:
+            from working_portia import working_assistant
+            
+            # Add pipeline context to query
+            context_info = ""
+            if pipelines:
+                failed_count = len([p for p in pipelines if p.get('status') == 'failed'])
+                running_count = len([p for p in pipelines if p.get('status') == 'running'])
+                success_count = len([p for p in pipelines if p.get('status') == 'success'])
                 
+                context_info = f"""
+                
+Current Pipeline Context:
+                - {success_count} successful pipelines
+                - {failed_count} failed pipelines  
+                - {running_count} running pipelines
+                """
+                
+                if failed_count > 0:
+                    failed_pipelines = [p for p in pipelines if p.get('status') == 'failed']
+                    context_info += f"\nFailed Pipeline Details:\n"
+                    for p in failed_pipelines[:2]:
+                        context_info += f"- {p['name']}: {p.get('error', 'Unknown error')}\n"
+            
+            # Enhanced query with context
+            enhanced_query = f"{user_query}{context_info}"
+            
+            result = working_assistant.analyze_devops_issue(enhanced_query)
+            
+            if result['success']:
                 return {
-                    'response': f"🔧 **Portia Workflow Processing...** Tools temporarily unavailable, but AI analysis complete.\n\nFor pipeline status queries, I recommend checking your repository directly or using the dashboard above.",
-                    'type': 'portia_fallback'
+                    'response': f"🤖 **Portia AI Assistant:**\n\n{result['response']}\n\n*Plan ID: {result['plan_id']}*",
+                    'type': 'portia_success',
+                    'plan_id': result['plan_id']
                 }
-        else:
-            # Use fast chat for simple queries - NO PORTIA DELAY
-            print("⚡ Using fast Gemini chat (bypassing Portia)...")
-            
-            # Get real pipeline context for Gemini
-            from fast_chat import get_pipeline_context
-            pipeline_context = get_pipeline_context()
-            
-            response = fast_chat.get_quick_response(user_query, pipeline_context)
+            else:
+                return {
+                    'response': f"🤖 **Portia AI Assistant:**\n\n{result.get('response', 'I can help you with DevOps pipeline management. What specific issue would you like assistance with?')}",
+                    'type': 'portia_response'
+                }
+                
+        except Exception as e:
+            print(f"Portia error: {e}")
             return {
-                'response': response,
-                'type': 'fast_chat'
+                'response': "🤖 **Portia AI Assistant:** I'm here to help with your DevOps pipelines. I can analyze failures, recommend actions, and coordinate with your development tools. What would you like to know?",
+                'type': 'portia_fallback'
             }
 
 # Global workflow manager

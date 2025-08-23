@@ -79,12 +79,27 @@ def main():
     if st.sidebar.button("🔄 Refresh Now"):
         st.rerun()
     
-    # Fetch pipeline data
-    pipelines = get_pipelines()
+    # Fetch pipeline data with loading state
+    with st.spinner('🔄 Loading pipeline data...'):
+        pipelines = get_pipelines()
     
     if not pipelines:
-        st.error("❌ Unable to connect to pipeline API. Make sure the backend is running.")
-        st.code("python backend/main.py")
+        st.warning("⏳ Backend is starting up or not available...")
+        st.info("🚀 If this persists, make sure backend is running: `python backend/simple_server.py`")
+        
+        # Show placeholder while waiting
+        st.subheader("📊 Pipeline Status (Loading...)")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("✅ Success", "--")
+        with col2:
+            st.metric("❌ Failed", "--")
+        with col3:
+            st.metric("🔄 Running", "--")
+        
+        # Auto-refresh every 3 seconds when no data
+        time.sleep(3)
+        st.rerun()
         return
     
     # Main dashboard
