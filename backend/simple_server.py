@@ -3,26 +3,26 @@ import json
 from datetime import datetime
 from urllib.parse import urlparse, parse_qs
 
-# Import GitHub API for real data
+# Import Portia GitHub integration
 try:
     import sys
     import os
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from github_api import github_api
-    USE_REAL_DATA = True
+    from portia_github import portia_github
+    USE_PORTIA = True
 except ImportError:
-    USE_REAL_DATA = False
-    print("GitHub API not available, using mock data")
+    USE_PORTIA = False
+    print("Portia GitHub not available, using mock data")
 
 def get_pipelines_data():
-    """Get pipeline data from GitHub API or fallback to mock"""
-    if USE_REAL_DATA:
+    """Get pipeline data from Portia GitHub or fallback to mock"""
+    if USE_PORTIA:
         try:
-            pipelines = github_api.get_workflow_runs()
+            pipelines = portia_github.get_pipeline_data()
             # Convert list to dict for compatibility
             return {p['id']: p for p in pipelines}
         except Exception as e:
-            print(f"GitHub API error: {e}")
+            print(f"Portia GitHub error: {e}")
     
     # Fallback mock data with repo info
     repo_owner = os.getenv("GITHUB_REPO_OWNER", "Hritikraj8804")
