@@ -149,6 +149,14 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
+    # Check if repository is selected
+    if 'selected_repo' in st.session_state:
+        show_pipelines()
+    else:
+        show_repositories()
+
+def show_repositories():
+    
     # Fetch repositories
     repositories = get_repositories()
     
@@ -254,18 +262,24 @@ def main():
                             st.session_state.selected_repo = repo
                             st.rerun()
         
-        # Show instruction if no repo selected
-        if 'selected_repo' not in st.session_state:
-            st.info("👆 Click on any repository card above to start monitoring its pipelines")
-            return
+        # Show instruction
+        st.info("👆 Click on any repository card above to start monitoring its pipelines")
     else:
         st.warning("⚠️ No repositories found. Make sure the backend is running.")
-        return
-    
-    # Get selected repository
+
+def show_pipelines():
     selected_repo = st.session_state.get('selected_repo')
     if not selected_repo:
         return
+    
+    # Show selected repository info with back button
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.success(f"✅ Monitoring: **{selected_repo.get('full_name', selected_repo['name'])}** ({selected_repo.get('language', 'Unknown')})")
+    with col2:
+        if st.button("← Back to Repos"):
+            del st.session_state.selected_repo
+            st.rerun()
     
     # Fetch pipelines for selected repo
     with st.spinner(f'🔄 Loading pipelines for {selected_repo.get("full_name", selected_repo["name"])}...'):
@@ -277,15 +291,6 @@ def main():
         st.warning(f"⚠️ No pipeline data found for {selected_repo.get('full_name', selected_repo['name'])}")
         st.info(f"Debug: API call was made to /pipelines?owner={selected_repo.get('owner')}&name={selected_repo.get('name')}")
         return
-    
-    # Show selected repository info with back button
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.success(f"✅ Monitoring: **{selected_repo.get('full_name', selected_repo['name'])}** ({selected_repo.get('language', 'Unknown')})")
-    with col2:
-        if st.button("← Back to Repos"):
-            del st.session_state.selected_repo
-            st.rerun()
     
     # Sidebar controls
     st.sidebar.markdown("""
@@ -360,47 +365,7 @@ def main():
         </div>
         """, unsafe_allow_html=True)
     
-    # Quick Actions
-    st.markdown("### ⚡ Quick Actions")
-    action_col1, action_col2, action_col3 = st.columns(3)
-    
-    with action_col1:
-        if st.button("🔄 Retry All Failed"):
-            failed_pipelines = [p for p in pipelines if p.get('status') == 'failed']
-            if failed_pipelines:
-                for pipeline in failed_pipelines:
-                    execute_action(pipeline['id'], 'retry', 'Bulk retry from quick actions')
-                st.success(f"✅ Initiated retry for {len(failed_pipelines)} pipeline(s)")
-                time.sleep(1)
-                st.rerun()
-            else:
-                st.info("📊 No failed pipelines to retry")
-    
-    with action_col2:
-        if st.button("📋 Export Report"):
-            report_data = {
-                'timestamp': datetime.now().isoformat(),
-                'repository': selected_repo.get('full_name', 'Unknown'),
-                'total_pipelines': total_count,
-                'success_count': success_count,
-                'failed_count': failed_count,
-                'running_count': running_count
-            }
-            st.download_button(
-                label="📎 Download JSON Report",
-                data=str(report_data),
-                file_name=f"pipeline_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                mime="application/json"
-            )
-    
-    with action_col3:
-        if st.button("🚀 Deploy Latest"):
-            success_pipelines = [p for p in pipelines if p.get('status') == 'success']
-            if success_pipelines:
-                st.success("🚀 Deployment initiated!")
-            else:
-                st.warning("⚠️ No successful builds available")
-    
+
     # Pipeline Details
     st.markdown("### 🔍 Pipeline Details")
     
@@ -410,7 +375,7 @@ def main():
         status_emoji = {"success": "✅", "failed": "❌", "running": "🔄"}
         emoji = status_emoji.get(pipeline.get("status"), "❓")
         
-        with st.expander(f"{emoji} {pipeline['name']}", expanded=pipeline['status'] == 'failed'):
+        with st.expander(f"{emoji} {pipeline['name']}", expanded=False):
             col1, col2 = st.columns(2)
             
             with col1:
@@ -442,6 +407,7 @@ def main():
                         with st.spinner('Retrying pipeline...'):
                             result = execute_action(pipeline['id'], 'retry', 'Manual retry')
                             if result:
+                                st.cache_data.clear()
                                 st.success(f"✅ {result['message']}")
                                 time.sleep(1)
                                 st.rerun()
@@ -453,6 +419,7 @@ def main():
                         with st.spinner('Rolling back...'):
                             result = execute_action(pipeline['id'], 'rollback', 'Manual rollback')
                             if result:
+                                st.cache_data.clear()
                                 st.success(f"✅ {result['message']}")
                                 time.sleep(1)
                                 st.rerun()
