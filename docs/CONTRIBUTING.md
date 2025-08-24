@@ -29,7 +29,7 @@ Thank you for your interest in contributing! This guide will help you get starte
 ### 1. Fork and Clone
 ```bash
 # Fork the repository on GitHub, then:
-git clone https://github.com/YOUR_USERNAME/portia.git
+git clone https://github.com/Hritikraj8804/Hritikraj8804-Portia_hack.git
 cd portia
 ```
 
