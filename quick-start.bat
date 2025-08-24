@@ -1,20 +1,23 @@
 @echo off
-echo 🚀 Quick Start - DevOps AI Assistant
+echo 🚀 DevOps AI Assistant - Quick Start
+echo =====================================
 echo.
 
-echo Starting backend server...
-start "Backend API" cmd /k "cd backend & python simple_server.py"
+echo.
+echo 🔧 Starting Backend (Port 8000)...
+start "Backend" cmd /k "echo Backend running at http://localhost:8000 && python backend/simple_backend.py"
 
-timeout /t 3 /nobreak > nul
+echo ⏳ Waiting for backend to start...
+timeout /t 3 /nobreak >nul
 
-echo Starting frontend dashboard...
-start "Frontend Dashboard" cmd /k "python -m streamlit run frontend/app.py --server.port 8501"
+echo 🎨 Starting Frontend (Port 8501)...
+start "Frontend" cmd /k "echo Frontend running at http://localhost:8501 && python -m streamlit run frontend/app.py"
 
 echo.
-echo ✅ Both services starting...
-echo 📊 Dashboard: http://localhost:8501
-echo 🔧 API: http://localhost:8000
+echo 🎉 Application started successfully!
 echo.
-echo Press any key to open dashboard...
-pause > nul
-start http://localhost:8501
+echo 📱 Access your app at: http://localhost:8501
+echo 📚 API docs at: http://localhost:8000
+echo.
+echo Press any key to exit (this will NOT stop the servers)
+pause >nul
