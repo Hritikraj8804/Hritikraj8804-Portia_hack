@@ -1,155 +1,206 @@
-# DevOps AI Assistant - Hackathon MVP
+# 🚀 DevOps AI Assistant
 
-A streamlined DevOps assistant for CI/CD pipeline management and troubleshooting, built for hackathon demonstration.
+> **Intelligent CI/CD Pipeline Management with AI-Powered Insights**
 
-## 🎯 Project Overview
+A powerful DevOps assistant that combines real-time GitHub Actions monitoring with AI-driven troubleshooting and recommendations. Built with Portia AI for intelligent agent management and enhanced with web search capabilities.
 
-This hackathon MVP provides:
-- **Real-time Pipeline Monitoring** - View status of all CI/CD pipelines
-- **Intelligent Actions** - Retry, rollback, and escalate failed pipelines
-- **Repository Selection** - Choose which repository to monitor
-- **Simple AI Chat** - Basic troubleshooting assistance
-- **Comprehensive Logging** - Full error tracking and analysis
+## ✨ Features
 
-## 🏗️ Architecture
+- 📊 **Real-time Pipeline Monitoring** - Live GitHub Actions workflow status
+- 🤖 **AI-Powered Chat** - Portia AI assistant with context awareness  
+- 🔍 **Intelligent Analysis** - Smart troubleshooting and recommendations
+- 📋 **Repository Management** - Easy switching between multiple repos
+- 📈 **Detailed Logging** - Comprehensive pipeline execution logs
+- 🌐 **Web Search Integration** - Enhanced responses with Tavily search
 
-### Simplified Stack
-- **Backend**: Python HTTP server with real GitHub data
-- **Frontend**: Streamlit dashboard
-- **Logging**: Centralized logging system
-- **Testing**: Automated test suite
+## 📸 Screenshots
+
+*Coming soon - Add screenshots of your dashboard here*
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Python 3.11+
-- pip
+**New to the project?** Start here: **[📚 Getting Started Guide](docs/GETTING_STARTED.md)**
 
-### Setup & Run
+### One-Minute Setup
 ```bash
-# 1. Clone and navigate
+# 1. Clone the repository
+git clone <your-repo-url>
 cd portia
 
-# 2. Install dependencies
+# 2. Install dependencies  
 pip install -r requirements.txt
 
-# 3. Configure environment
+# 3. Configure API keys
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your keys (see API Keys Guide)
 
-# 4. Run tests (recommended)
-python test_app.py
-
-# 5. Start both services (one-click)
-quick-start.bat
-
-# OR manually:
-# Terminal 1: python backend/simple_backend.py
-# Terminal 2: streamlit run frontend/app.py
+# 4. Start the application
+quick-start.bat  # Windows
+# Or: python backend/simple_backend.py & streamlit run frontend/app.py
 ```
 
-### Access
-- **Frontend**: http://localhost:8501
-- **Backend API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
+**Access your dashboard:** http://localhost:8501
 
-## 📁 Project Structure
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| **[🚀 Getting Started](docs/GETTING_STARTED.md)** | Complete setup guide for new users |
+| **[🔑 API Keys Setup](docs/API_KEYS.md)** | How to obtain all required API keys |
+| **[📚 User Guide](docs/USER_GUIDE.md)** | Learn how to use all features |
+| **[🔌 API Reference](docs/API_REFERENCE.md)** | Backend API documentation |
+| **[🔧 Troubleshooting](docs/TROUBLESHOOTING.md)** | Common issues and solutions |
+| **[❓ FAQ](docs/FAQ.md)** | Frequently asked questions |
+| **[🤝 Contributing](docs/CONTRIBUTING.md)** | How to contribute to the project |
+
+## 🏢 Architecture
+
+```mermaid
+graph TB
+    A[GitHub API] --> B[Backend Server]
+    B --> C[Streamlit Frontend]
+    C --> D[Portia AI Agent]
+    D --> E[Google Gemini LLM]
+    D --> F[Tavily Search]
+    C --> G[User Dashboard]
 ```
-portia/
-├── backend/
-│   └── simple_backend.py   # HTTP server with real GitHub data
-├── frontend/
-│   └── app.py              # Streamlit dashboard
-├── logs/                   # Application logs (auto-created)
-├── test_app.py            # Comprehensive test suite
-├── logger.py              # Centralized logging system
-├── quick-start.bat        # One-click startup script
-├── requirements.txt       # Dependencies
-├── .env                   # Environment variables
-└── README.md             # This file
+
+**Tech Stack:**
+- **Frontend:** Streamlit (Python web framework)
+- **Backend:** Python HTTP server with GitHub API integration
+- **AI:** Portia agent manager with Google Gemini LLM
+- **Search:** Tavily web search for enhanced responses
+- **Data:** Real-time GitHub Actions workflows
+
+## ⚙️ System Requirements
+
+- **Python 3.11+** (3.13 recommended)
+- **Operating System:** Windows, macOS, or Linux
+- **Memory:** 4GB RAM minimum (8GB recommended)
+- **Network:** Internet connection for API calls
+- **GitHub Account:** For repository access
+
+## 🔑 Required API Keys
+
+| Service | Purpose | Required |
+|---------|---------|----------|
+| **Google API** | Portia AI language model | ✅ Yes |
+| **Portia AI** | Agent management | ✅ Yes |
+| **GitHub Token** | Repository access | ✅ Yes |
+| **Tavily API** | Enhanced search | ❌ Optional |
+| **Hugging Face** | Additional AI features | ❌ Optional |
+
+**Need help getting keys?** → [API Keys Setup Guide](docs/API_KEYS.md)
+
+## 🎆 Demo
+
+### What You Can Do
+
+1. **📋 Monitor Multiple Repositories**
+   - Browse 60+ GitHub repositories
+   - Search and filter repositories
+   - Switch between projects instantly
+
+2. **📈 Real-time Pipeline Insights**
+   - Live GitHub Actions status
+   - Success/failure metrics
+   - Detailed execution logs
+   - Error analysis and debugging
+
+3. **🤖 AI-Powered Assistance**
+   - Ask questions about pipeline failures
+   - Get DevOps best practice recommendations
+   - Troubleshoot issues with context-aware AI
+   - Web search integration for enhanced answers
+
+### Sample Conversations
+```
+👤 User: "Why did my build fail?"
+🤖 Portia: "I can see 2 failed pipelines in your repository. 
+         The main issue is a test failure in the CI pipeline. 
+         Let me search for solutions..."
+
+👤 User: "How can I improve build performance?"
+🤖 Portia: "Based on your pipeline data, I recommend:
+         1. Parallel test execution
+         2. Docker layer caching
+         3. Dependency caching strategies..."
 ```
 
-## 🧪 Testing
+## 🔌 API Integration
 
-Run the test suite before starting:
+The backend provides RESTful APIs for custom integrations:
+
 ```bash
-python test_app.py
+# Get repositories
+curl http://localhost:8000/repositories
+
+# Get pipeline status
+curl "http://localhost:8000/pipelines?owner=username&name=repo"
+
+# Get detailed logs
+curl http://localhost:8000/pipelines/run_123/logs
 ```
 
-Tests verify:
-- ✅ Backend API endpoints
-- ✅ Frontend dependencies
-- ✅ Environment configuration
-- ✅ Pipeline actions
-- ✅ Error handling
+**Full API documentation:** [API Reference](docs/API_REFERENCE.md)
 
-## 📊 Features
+## 🤝 Contributing
 
-### Dashboard
-- **Repository Selection** - Choose from available repositories
-- **Pipeline Status** - Real-time status of all pipelines
-- **Health Metrics** - Success/failure counts and health score
-- **Quick Actions** - Bulk retry, export reports, deploy
+We welcome contributions! Here's how to get started:
 
-### Pipeline Management
-- **Individual Actions** - Retry, rollback, escalate per pipeline
-- **Detailed Logs** - View execution logs for troubleshooting
-- **Status Filtering** - Filter by success/failed/running
-- **Progress Tracking** - Real-time progress for running pipelines
+1. **🍴 Fork the repository**
+2. **🌱 Create a feature branch**
+3. **✨ Make your changes**
+4. **🧪 Add tests**
+5. **📤 Submit a pull request**
 
-### AI Assistant
-- **Status Queries** - Ask about system health
-- **Quick Commands** - Simple troubleshooting assistance
-- **Help System** - Available commands and guidance
+**Detailed guide:** [Contributing Guidelines](docs/CONTRIBUTING.md)
 
-## 🔧 API Endpoints
+### Areas We Need Help With
+- 🐛 Bug fixes and error handling
+- 🎨 UI/UX improvements
+- 📚 Documentation and examples
+- ⚡ Performance optimizations
+- 🧪 Test coverage expansion
 
-- `GET /` - API information
-- `GET /health` - Health check
-- `GET /repositories` - Available repositories
-- `GET /pipelines` - All pipeline statuses
-- `GET /pipelines/{id}` - Specific pipeline
-- `POST /pipelines/action` - Execute actions (retry/rollback/escalate)
-- `GET /pipelines/{id}/logs` - Pipeline logs
+## 👥 Community
 
-## 📝 Logging
+- **💬 Discussions:** Ask questions and share ideas
+- **🐛 Issues:** Report bugs and request features  
+- **📦 Pull Requests:** Contribute code improvements
+- **⭐ Star the repo:** Show your support!
 
-All activities are logged to `logs/` directory:
-- **app.log** - General application logs
-- **api.log** - Backend API logs  
-- **frontend.log** - Frontend interaction logs
+## 🏆 Acknowledgments
 
-Log files rotate automatically (10MB max, 5 backups).
+- **Portia AI** for intelligent agent management
+- **GitHub** for comprehensive API access
+- **Streamlit** for rapid web app development
+- **Google** for powerful language models
+- **Open source community** for inspiration and tools
 
-## 🎨 Demo Flow
+## 🔒 Security & Privacy
 
-1. **Start Application** - Run backend and frontend
-2. **Select Repository** - Choose from available repos
-3. **View Dashboard** - See pipeline status and metrics
-4. **Handle Failures** - Use retry/rollback actions
-5. **Check Logs** - View detailed execution logs
-6. **AI Assistance** - Ask status questions
-
-## 🔒 Security
-
-- API token authentication
-- Input validation
-- Error handling
-- Secure credential storage
-
-## 🚀 Deployment
-
-For hackathon demo:
-1. Ensure all tests pass
-2. Start both backend and frontend
-3. Demo repository selection
-4. Show pipeline actions
-5. Demonstrate AI assistant
+- **🔐 API keys stored locally** - Never committed to version control
+- **🔒 Secure token handling** - Proper authentication practices
+- **🚫 No data persistence** - Your data stays with you
+- **🌐 Standard API usage** - Only accesses what you authorize
 
 ## 📄 License
 
-MIT License - Built for hackathon demonstration.
+MIT License - See [LICENSE](LICENSE) file for details.
+
+## 🎆 Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=your-username/portia&type=Date)](https://star-history.com/#your-username/portia&Date)
 
 ---
 
-**Hackathon Ready** ✅ - Simplified, tested, and optimized for demo presentation.
+<div align="center">
+
+**Ready to revolutionize your DevOps workflow?** 🚀
+
+[Get Started](docs/GETTING_STARTED.md) • [View Demo](#demo) • [Join Community](#community)
+
+**Built with ❤️ by the open source community**
+
+</div>
