@@ -390,6 +390,9 @@ def show_repositories():
                         # Monitor button
                         if st.button(f"🚀 Monitor {repo['name']}", key=f"repo_{start_idx + repo_index}"):
                             st.session_state.selected_repo = repo
+                            # Clear chat history when changing repository
+                            if 'messages' in st.session_state:
+                                del st.session_state.messages
                             st.rerun()
         
         # Show instruction
@@ -409,6 +412,9 @@ def show_pipelines():
     with col2:
         if st.button("← Back to Repos"):
             del st.session_state.selected_repo
+            # Clear chat history when going back to repos
+            if 'messages' in st.session_state:
+                del st.session_state.messages
             st.rerun()
     
     # Fetch pipelines for selected repo
