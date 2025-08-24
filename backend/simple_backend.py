@@ -66,6 +66,73 @@ def get_github_repositories():
         print(f"Error fetching GitHub repos: {e}")
         return []
 
+def get_github_workflow_logs(run_id):
+    """Fetch real GitHub Actions workflow logs"""
+    github_token = os.getenv('GITHUB_TOKEN')
+    if not github_token:
+        return ["No GitHub token configured"]
+    
+    headers = {
+        'Authorization': f'token {github_token}',
+        'Accept': 'application/vnd.github.v3+json'
+    }
+    
+    try:
+        # Get workflow run details first to get the repository info
+        run_url = f'https://api.github.com/repos/Hritikraj8804/my-node-devops-app/actions/runs/{run_id}'
+        run_response = requests.get(run_url, headers=headers)
+        
+        if run_response.status_code != 200:
+            return [f"Failed to fetch run details: {run_response.status_code}"]
+        
+        run_data = run_response.json()
+        
+        # Get jobs for this workflow run
+        jobs_url = f'https://api.github.com/repos/Hritikraj8804/my-node-devops-app/actions/runs/{run_id}/jobs'
+        jobs_response = requests.get(jobs_url, headers=headers)
+        
+        if jobs_response.status_code != 200:
+            return [f"Failed to fetch jobs: {jobs_response.status_code}"]
+        
+        jobs_data = jobs_response.json()
+        logs = []
+        
+        # Add run summary
+        logs.append(f"[INFO] Workflow: {run_data.get('name', 'Unknown')}")
+        logs.append(f"[INFO] Status: {run_data.get('status', 'unknown')} - {run_data.get('conclusion', 'unknown')}")
+        logs.append(f"[INFO] Started: {run_data.get('created_at', 'unknown')}")
+        logs.append(f"[INFO] Branch: {run_data.get('head_branch', 'unknown')}")
+        logs.append("")
+        
+        # Add job details
+        for job in jobs_data.get('jobs', []):
+            logs.append(f"[JOB] {job.get('name', 'Unknown Job')}")
+            logs.append(f"[INFO] Status: {job.get('status', 'unknown')} - {job.get('conclusion', 'unknown')}")
+            
+            if job.get('started_at'):
+                logs.append(f"[INFO] Started: {job['started_at']}")
+            if job.get('completed_at'):
+                logs.append(f"[INFO] Completed: {job['completed_at']}")
+            
+            # Add step details
+            for step in job.get('steps', []):
+                step_status = step.get('conclusion', step.get('status', 'unknown'))
+                step_name = step.get('name', 'Unknown Step')
+                logs.append(f"  [STEP] {step_name}: {step_status}")
+                
+                if step.get('started_at'):
+                    logs.append(f"    Started: {step['started_at']}")
+                if step.get('completed_at'):
+                    logs.append(f"    Completed: {step['completed_at']}")
+            
+            logs.append("")
+        
+        return logs if logs else ["No logs available for this workflow run"]
+        
+    except Exception as e:
+        print(f"Error fetching workflow logs: {e}")
+        return [f"Error fetching logs: {str(e)}"]
+
 def get_github_workflows(owner, repo):
     """Fetch real GitHub Actions workflows"""
     print(f"DEBUG: get_github_workflows called with owner={owner}, repo={repo}")
@@ -183,11 +250,7 @@ class APIHandler(BaseHTTPRequestHandler):
                 self.send_json([])
         elif path.startswith('/pipelines/') and path.endswith('/logs'):
             pipeline_id = path.split('/')[2]
-            logs = [
-                "2024-01-15T11:15:00Z [INFO] Starting pipeline execution",
-                "2024-01-15T11:15:30Z [INFO] Build stage completed", 
-                "2024-01-15T11:16:00Z [ERROR] Test failed"
-            ]
+            logs = get_github_workflow_logs(pipeline_id)
             self.send_json({"pipeline_id": pipeline_id, "logs": logs})
         elif path.startswith('/pipelines/'):
             # Handle individual pipeline requests
