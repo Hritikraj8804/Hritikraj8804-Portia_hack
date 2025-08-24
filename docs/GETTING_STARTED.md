@@ -15,7 +15,7 @@ Before you begin, make sure you have:
 
 ### Step 1: Clone the Repository
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/Hritikraj8804/Hritikraj8804-Portia_hack.git
 cd portia
 ```
 
