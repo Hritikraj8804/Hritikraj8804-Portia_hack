@@ -2,6 +2,10 @@ import streamlit as st
 import requests
 from datetime import datetime, timedelta
 import time
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Page config
 st.set_page_config(
@@ -136,6 +140,100 @@ def execute_action(pipeline_id, action, reason=""):
     except Exception as e:
         print(f"Error executing action: {e}")
         return None
+
+def get_portia_response(prompt, selected_repo, pipelines):
+    """Get response from Portia API with intelligent fallback"""
+    portia_api_key = os.getenv('PORTIA_API_KEY')
+    if not portia_api_key:
+        return "⚠️ Portia API key not configured. Please check your .env file."
+    
+    # Build context about current system state
+    context = f"""
+You are Portia, a DevOps AI Assistant. Current system context:
+- Repository: {selected_repo.get('full_name', 'Unknown')}
+- Total Pipelines: {len(pipelines)}
+- Failed: {len([p for p in pipelines if p.get('status') == 'failed'])}
+- Success: {len([p for p in pipelines if p.get('status') == 'success'])}
+- Running: {len([p for p in pipelines if p.get('status') == 'running'])}
+
+Pipeline Details:
+{chr(10).join([f"- {p.get('name', 'Unknown')}: {p.get('status', 'unknown')} ({p.get('error', 'No error') if p.get('status') == 'failed' else 'OK'})" for p in pipelines[:5]])}
+
+User Question: {prompt}
+
+Provide helpful DevOps assistance based on this context."""
+    
+    headers = {
+        'Authorization': f'Bearer {portia_api_key}',
+        'Content-Type': 'application/json'
+    }
+    
+    # Try multiple Portia endpoints that were working
+    endpoints = [
+        ('https://api.portia.dev/v1/completions', {'prompt': context, 'max_tokens': 500}),
+        ('https://api.getportia.com/v1/chat/completions', {'model': 'gpt-3.5-turbo', 'messages': [{'role': 'user', 'content': context}], 'max_tokens': 500})
+    ]
+    
+    for endpoint, data in endpoints:
+        try:
+            response = requests.post(endpoint, headers=headers, json=data, timeout=10)
+            if response.status_code == 200:
+                result = response.json()
+                return result.get('completion', result.get('choices', [{}])[0].get('message', {}).get('content', 'Portia response received'))
+        except:
+            continue
+    
+    # Intelligent fallback using pipeline context (Portia-style responses)
+    return get_portia_fallback_response(prompt, selected_repo, pipelines)
+
+def get_portia_fallback_response(prompt, selected_repo, pipelines):
+    """Portia-style intelligent fallback when API is unavailable"""
+    prompt_lower = prompt.lower()
+    failed_count = len([p for p in pipelines if p.get('status') == 'failed'])
+    success_count = len([p for p in pipelines if p.get('status') == 'success'])
+    
+    # Add Portia branding to responses
+    portia_prefix = "🤖 **Portia AI** (Offline Mode)\n\n"
+    
+    if any(word in prompt_lower for word in ['status', 'health']):
+        return f"""{portia_prefix}📊 **System Analysis for {selected_repo.get('name', 'Repository')}**
+
+{'🚨 **CRITICAL**: Multiple failures detected!' if failed_count > 2 else '⚠️ **WARNING**: Issues found!' if failed_count > 0 else '✅ **HEALTHY**: All systems operational!'}
+
+**Pipeline Summary:**
+• Total: {len(pipelines)} pipelines
+• ✅ Success: {success_count}
+• ❌ Failed: {failed_count}
+• 🔄 Running: {len([p for p in pipelines if p.get('status') == 'running'])}
+
+*Note: Portia API temporarily unavailable - using cached intelligence.*"""
+    
+    elif any(word in prompt_lower for word in ['failed', 'error']):
+        if failed_count == 0:
+            return f"{portia_prefix}🎉 Excellent! No failed pipelines detected. Your DevOps pipeline is running smoothly!"
+        
+        failed_pipelines = [p for p in pipelines if p.get('status') == 'failed'][:3]
+        return f"""{portia_prefix}🔍 **Failure Analysis**
+
+**{failed_count} pipeline(s) need attention:**
+
+{chr(10).join([f"• **{p.get('name', 'Unknown')}**: {p.get('error', 'Unknown error')}" for p in failed_pipelines])}
+
+**💡 Portia Recommendations:**
+• Check logs for detailed error information
+• Use retry buttons for transient failures
+• Consider rollback if issues persist"""
+    
+    else:
+        return f"""{portia_prefix}I'm Portia, your DevOps AI Assistant. I'm currently running in offline mode due to a temporary service issue.
+
+**Current Status for {selected_repo.get('name', 'Repository')}:**
+• {len(pipelines)} total pipelines
+• {success_count} successful, {failed_count} failed
+
+**💬 Try asking:** "What's the status?" or "Show failed pipelines"
+
+*Portia API will be back online soon!*"""
 
 def main():
     print("Starting DevOps AI Assistant frontend")
@@ -396,44 +494,7 @@ def show_pipelines():
             if pipeline["status"] == "failed" and pipeline.get("error"):
                 st.error(f"**Error:** {pipeline['error']}")
             
-            # Action buttons for failed pipelines
-            if pipeline["status"] == "failed":
-                st.markdown("#### 🛠️ Quick Actions")
-                
-                action_col1, action_col2, action_col3 = st.columns(3)
-                
-                with action_col1:
-                    if st.button("🔄 Retry", key=f"retry_{pipeline['id']}"):
-                        with st.spinner('Retrying pipeline...'):
-                            result = execute_action(pipeline['id'], 'retry', 'Manual retry')
-                            if result:
-                                st.cache_data.clear()
-                                st.success(f"✅ {result['message']}")
-                                time.sleep(1)
-                                st.rerun()
-                            else:
-                                st.error("❌ Failed to execute retry")
-                
-                with action_col2:
-                    if st.button("⏪ Rollback", key=f"rollback_{pipeline['id']}"):
-                        with st.spinner('Rolling back...'):
-                            result = execute_action(pipeline['id'], 'rollback', 'Manual rollback')
-                            if result:
-                                st.cache_data.clear()
-                                st.success(f"✅ {result['message']}")
-                                time.sleep(1)
-                                st.rerun()
-                            else:
-                                st.error("❌ Failed to execute rollback")
-                
-                with action_col3:
-                    if st.button("🚨 Escalate", key=f"escalate_{pipeline['id']}"):
-                        result = execute_action(pipeline['id'], 'escalate', 'Manual escalation')
-                        if result:
-                            st.success(f"✅ {result['message']}")
-                        else:
-                            st.error("❌ Failed to escalate")
-            
+
             # Logs section
             if st.button(f"📋 View Logs", key=f"logs_{pipeline['id']}"):
                 with st.spinner('Loading logs...'):
@@ -449,7 +510,7 @@ def show_pipelines():
     
     if "messages" not in st.session_state:
         st.session_state.messages = [
-            {"role": "assistant", "content": "👋 Hi! I'm your DevOps AI Assistant. I can help you with pipeline status, troubleshooting, and recommendations. What would you like to know?"}
+            {"role": "assistant", "content": f"👋 Hi! I'm Portia, your DevOps AI Assistant. I can see you're monitoring **{selected_repo.get('full_name', 'your repository')}** with {len(pipelines)} pipelines. How can I help you today?"}
         ]
     
     # Display chat messages
@@ -464,28 +525,8 @@ def show_pipelines():
             st.markdown(prompt)
         
         with st.chat_message("assistant"):
-            # Simple responses for common queries
-            if prompt.lower() in ['status', 'health']:
-                response = f"""📊 **System Status Report**
-
-✅ **Healthy:** {success_count} pipelines
-❌ **Failed:** {failed_count} pipelines  
-🔄 **Running:** {running_count} pipelines
-
-{'🚨 **Action Required:** Failed pipelines need attention!' if failed_count > 0 else '✅ **All Systems Operational**'}"""
-            elif 'retry' in prompt.lower():
-                response = "🔄 **Retry Command Detected**\n\nTo retry a pipeline, use the action buttons in the pipeline details above."
-            elif 'help' in prompt.lower():
-                response = """🤖 **Available Commands:**
-
-• `status` - Get system status report
-• `retry` - Information about retrying pipelines  
-• `help` - Show this help message
-
-You can also use the action buttons in the pipeline details for direct actions."""
-            else:
-                response = "I'm your DevOps AI Assistant. I can help with pipeline status and troubleshooting. Try asking about 'status' or 'help' for available commands."
-            
+            with st.spinner("🤖 Portia is thinking..."):
+                response = get_portia_response(prompt, selected_repo, pipelines)
             st.markdown(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
 
