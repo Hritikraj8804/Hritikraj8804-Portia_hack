@@ -163,7 +163,7 @@ def main():
         runner.test("Unauthorized Access", test_unauthorized_action)
     else:
         print("⚠️ Backend not running - Skipping API tests")
-        print("   Start backend with: python backend/main.py")
+        print("   Start backend with: python backend/simple_backend.py")
     
     # Frontend tests
     print("\n🎨 Frontend Tests")
@@ -180,7 +180,7 @@ def main():
         print("\n🎉 All tests passed! Ready to run the application.")
         if not backend_running:
             print("\n📝 Next steps:")
-            print("1. Start backend: python backend/main.py")
+            print("1. Start backend: python backend/simple_backend.py")
             print("2. Start frontend: streamlit run frontend/app.py")
         return 0
     else:
