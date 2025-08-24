@@ -27,7 +27,7 @@ A powerful DevOps assistant that combines real-time GitHub Actions monitoring wi
 ### One-Minute Setup
 ```bash
 # 1. Clone the repository
-git clone <your-repo-url>
+git clone (https://github.com/Hritikraj8804/Hritikraj8804-Portia_hack.git)
 cd portia
 
 # 2. Install dependencies  
