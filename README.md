@@ -1,5 +1,8 @@
 # 🚀 DevOps AI Assistant
 
+<img width="1293" height="253" alt="image" src="https://github.com/user-attachments/assets/30feb5be-c3b0-42e6-8a5b-c01b5cf17524" />
+
+
 > **Intelligent CI/CD Pipeline Management with AI-Powered Insights**
 
 A powerful DevOps assistant that combines real-time GitHub Actions monitoring with AI-driven troubleshooting and recommendations. Built with Portia AI for intelligent agent management and enhanced with web search capabilities.
