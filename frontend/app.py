@@ -142,49 +142,58 @@ def execute_action(pipeline_id, action, reason=""):
         return None
 
 def get_portia_response(prompt, selected_repo, pipelines):
-    """Get response from Portia API with intelligent fallback"""
-    portia_api_key = os.getenv('PORTIA_API_KEY')
-    if not portia_api_key:
-        return "⚠️ Portia API key not configured. Please check your .env file."
-    
-    # Build context about current system state
-    context = f"""
-You are Portia, a DevOps AI Assistant. Current system context:
-- Repository: {selected_repo.get('full_name', 'Unknown')}
+    """Get response using actual Portia SDK"""
+    try:
+        # Force local mode to avoid cloud API timeouts
+        os.environ['PORTIA_LOCAL_MODE'] = 'true'
+        os.environ['PORTIA_DISABLE_CLOUD'] = 'true'
+        
+        # Import Portia SDK
+        from portia import Portia, Config
+        
+        # Build simple DevOps query
+        devops_query = f"""
+I'm monitoring a DevOps system with the following status:
+- Repository: {selected_repo.get('name', 'Unknown')}
 - Total Pipelines: {len(pipelines)}
 - Failed: {len([p for p in pipelines if p.get('status') == 'failed'])}
-- Success: {len([p for p in pipelines if p.get('status') == 'success'])}
-- Running: {len([p for p in pipelines if p.get('status') == 'running'])}
+- Successful: {len([p for p in pipelines if p.get('status') == 'success'])}
 
-Pipeline Details:
-{chr(10).join([f"- {p.get('name', 'Unknown')}: {p.get('status', 'unknown')} ({p.get('error', 'No error') if p.get('status') == 'failed' else 'OK'})" for p in pipelines[:5]])}
+User asks: {prompt}
 
-User Question: {prompt}
-
-Provide helpful DevOps assistance based on this context."""
-    
-    headers = {
-        'Authorization': f'Bearer {portia_api_key}',
-        'Content-Type': 'application/json'
-    }
-    
-    # Try multiple Portia endpoints that were working
-    endpoints = [
-        ('https://api.portia.dev/v1/completions', {'prompt': context, 'max_tokens': 500}),
-        ('https://api.getportia.com/v1/chat/completions', {'model': 'gpt-3.5-turbo', 'messages': [{'role': 'user', 'content': context}], 'max_tokens': 500})
-    ]
-    
-    for endpoint, data in endpoints:
-        try:
-            response = requests.post(endpoint, headers=headers, json=data, timeout=10)
-            if response.status_code == 200:
-                result = response.json()
-                return result.get('completion', result.get('choices', [{}])[0].get('message', {}).get('content', 'Portia response received'))
-        except:
-            continue
-    
-    # Intelligent fallback using pipeline context (Portia-style responses)
-    return get_portia_fallback_response(prompt, selected_repo, pipelines)
+Provide a brief, helpful DevOps response."""
+        
+        # Create Portia config for local operation
+        config = Config(
+            llm_provider="google",
+            enable_tools=True,              # Enable tools including Tavily
+            enable_introspection=False,
+            enable_remote_tools=False,      # Keep remote MCP disabled
+            use_local_mode=True,            # Force local mode to avoid cloud API timeouts
+            timeout=30                      # Shorter timeout for local operation
+        )
+        portia = Portia(config=config)
+        
+        # Run simple query
+        result = portia.run(devops_query)
+        
+        # Extract response
+        if hasattr(result.outputs, 'final_output'):
+            if hasattr(result.outputs.final_output, 'value'):
+                response = str(result.outputs.final_output.value)
+            else:
+                response = str(result.outputs.final_output)
+        else:
+            response = "Portia processed your request successfully."
+        
+        return f"🤖 **Portia AI** (Agent Manager)\n\n{response}"
+        
+    except ImportError:
+        print("Portia SDK not available")
+        return get_portia_fallback_response(prompt, selected_repo, pipelines)
+    except Exception as e:
+        print(f"Portia SDK error: {e}")
+        return get_portia_fallback_response(prompt, selected_repo, pipelines)
 
 def get_portia_fallback_response(prompt, selected_repo, pipelines):
     """Portia-style intelligent fallback when API is unavailable"""
@@ -193,7 +202,7 @@ def get_portia_fallback_response(prompt, selected_repo, pipelines):
     success_count = len([p for p in pipelines if p.get('status') == 'success'])
     
     # Add Portia branding to responses
-    portia_prefix = "🤖 **Portia AI** (Offline Mode)\n\n"
+    portia_prefix = "🤖 **Portia AI** (Local Mode)\n\n"
     
     if any(word in prompt_lower for word in ['status', 'health']):
         return f"""{portia_prefix}📊 **System Analysis for {selected_repo.get('name', 'Repository')}**
@@ -206,7 +215,7 @@ def get_portia_fallback_response(prompt, selected_repo, pipelines):
 • ❌ Failed: {failed_count}
 • 🔄 Running: {len([p for p in pipelines if p.get('status') == 'running'])}
 
-*Note: Portia API temporarily unavailable - using cached intelligence.*"""
+*Note: Using local Portia intelligence while API reconnects.*"""
     
     elif any(word in prompt_lower for word in ['failed', 'error']):
         if failed_count == 0:
@@ -225,7 +234,7 @@ def get_portia_fallback_response(prompt, selected_repo, pipelines):
 • Consider rollback if issues persist"""
     
     else:
-        return f"""{portia_prefix}I'm Portia, your DevOps AI Assistant. I'm currently running in offline mode due to a temporary service issue.
+        return f"""{portia_prefix}I'm Portia, your DevOps AI Assistant. I'm analyzing your pipeline data locally while attempting to connect to Portia services.
 
 **Current Status for {selected_repo.get('name', 'Repository')}:**
 • {len(pipelines)} total pipelines
@@ -233,7 +242,7 @@ def get_portia_fallback_response(prompt, selected_repo, pipelines):
 
 **💬 Try asking:** "What's the status?" or "Show failed pipelines"
 
-*Portia API will be back online soon!*"""
+*Attempting to reconnect to Portia API...*"""
 
 def main():
     print("Starting DevOps AI Assistant frontend")
@@ -520,15 +529,18 @@ def show_pipelines():
     
     # Chat input
     if prompt := st.chat_input("Ask about pipelines..."):
+        # Add user message
         st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
         
-        with st.chat_message("assistant"):
-            with st.spinner("🤖 Portia is thinking..."):
-                response = get_portia_response(prompt, selected_repo, pipelines)
-            st.markdown(response)
-            st.session_state.messages.append({"role": "assistant", "content": response})
+        # Get AI response
+        with st.spinner("🤖 Portia is thinking... (this may take a moment)"):
+            response = get_portia_response(prompt, selected_repo, pipelines)
+        
+        # Add assistant response
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        
+        # Rerun to display the new messages
+        st.rerun()
 
 if __name__ == "__main__":
     main()

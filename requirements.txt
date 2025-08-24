@@ -1,5 +1,14 @@
-# Minimal working dependencies for Python 3.13
-streamlit==1.40.0
-requests==2.31.0
-python-dotenv==1.0.0
-pandas==2.2.3
+# # Minimal working dependencies for Python 3.13
+# streamlit==1.40.0
+# requests==2.31.0
+# python-dotenv==1.0.0
+# pandas==2.2.3
+
+fastapi==0.68.0
+uvicorn==0.15.0
+pydantic==1.10.12
+streamlit
+portia-sdk-python[google]
+python-dotenv
+httpx
+google-generativeai
