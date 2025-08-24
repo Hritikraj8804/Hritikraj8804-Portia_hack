@@ -14,7 +14,7 @@ This hackathon MVP provides:
 ## 🏗️ Architecture
 
 ### Simplified Stack
-- **Backend**: FastAPI with mock data
+- **Backend**: Python HTTP server with real GitHub data
 - **Frontend**: Streamlit dashboard
 - **Logging**: Centralized logging system
 - **Testing**: Automated test suite
@@ -40,11 +40,12 @@ cp .env.example .env
 # 4. Run tests (recommended)
 python test_app.py
 
-# 5. Start backend (Terminal 1)
-python backend/main.py
+# 5. Start both services (one-click)
+quick-start.bat
 
-# 6. Start frontend (Terminal 2)
-streamlit run frontend/app.py
+# OR manually:
+# Terminal 1: python backend/simple_backend.py
+# Terminal 2: streamlit run frontend/app.py
 ```
 
 ### Access
@@ -56,12 +57,13 @@ streamlit run frontend/app.py
 ```
 portia/
 ├── backend/
-│   └── main.py              # FastAPI server with mock data
+│   └── simple_backend.py   # HTTP server with real GitHub data
 ├── frontend/
 │   └── app.py              # Streamlit dashboard
 ├── logs/                   # Application logs (auto-created)
 ├── test_app.py            # Comprehensive test suite
 ├── logger.py              # Centralized logging system
+├── quick-start.bat        # One-click startup script
 ├── requirements.txt       # Dependencies
 ├── .env                   # Environment variables
 └── README.md             # This file
