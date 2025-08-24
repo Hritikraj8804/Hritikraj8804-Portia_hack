@@ -97,7 +97,7 @@ graph TB
 ### What You Can Do
 
 1. **📋 Monitor Multiple Repositories**
-   - Browse 60+ GitHub repositories
+   - Browse GitHub repositories
    - Search and filter repositories
    - Switch between projects instantly
 
@@ -189,17 +189,12 @@ We welcome contributions! Here's how to get started:
 
 MIT License - See [LICENSE](LICENSE) file for details.
 
-## 🎆 Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=your-username/portia&type=Date)](https://star-history.com/#your-username/portia&Date)
-
----
 
 <div align="center">
 
 **Ready to revolutionize your DevOps workflow?** 🚀
 
-[Get Started](docs/GETTING_STARTED.md) • [View Demo](#demo) • [Join Community](#community)
+[Get Started](docs/GETTING_STARTED.md) • [View Demo](#demo) 
 
 **Built with ❤️ by the open source community**
 
