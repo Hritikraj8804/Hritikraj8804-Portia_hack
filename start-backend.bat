@@ -1,10 +1,8 @@
 @echo off
-echo 🚀 Starting DevOps Assistant Backend...
+echo 🚀 Starting DevOps AI Assistant Backend...
 echo.
-
-cd backend
-python simple_server.py
-
+echo Backend will be available at: http://localhost:8000
+echo API Documentation at: http://localhost:8000/docs
 echo.
-echo Backend started at http://localhost:8000
+python backend/main.py
 pause

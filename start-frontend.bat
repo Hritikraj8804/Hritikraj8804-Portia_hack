@@ -1,9 +1,8 @@
 @echo off
-echo 🎨 Starting DevOps Assistant Frontend...
+echo 🎨 Starting DevOps AI Assistant Frontend...
 echo.
-
-python -m streamlit run frontend/app.py --server.port 8501
-
+echo Frontend will be available at: http://localhost:8501
+echo Make sure backend is running at: http://localhost:8000
 echo.
-echo Frontend started at http://localhost:8501
+python -m streamlit run frontend/app.py
 pause
