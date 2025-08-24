@@ -197,7 +197,7 @@ MIT License - See [LICENSE](LICENSE) file for details.
 
 **Ready to revolutionize your DevOps workflow?** 🚀
 
-[Get Started](docs/GETTING_STARTED.md) • [View Demo](#demo) 
+[Get Started](docs/GETTING_STARTED.md) 
 
 **Built with ❤️ by the open source community**
 
