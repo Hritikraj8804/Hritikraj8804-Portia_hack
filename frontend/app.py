@@ -141,59 +141,82 @@ def execute_action(pipeline_id, action, reason=""):
         print(f"Error executing action: {e}")
         return None
 
-def get_portia_response(prompt, selected_repo, pipelines):
-    """Get response using actual Portia SDK"""
+@st.cache_resource
+def get_portia_agent():
+    """Initialize optimized Portia agent with Google Gemini"""
     try:
-        # Force local mode to avoid cloud API timeouts
-        os.environ['PORTIA_LOCAL_MODE'] = 'true'
-        os.environ['PORTIA_DISABLE_CLOUD'] = 'true'
-        
-        # Import Portia SDK
         from portia import Portia, Config
         
-        # Build simple DevOps query
-        devops_query = f"""
-I'm monitoring a DevOps system with the following status:
-- Repository: {selected_repo.get('name', 'Unknown')}
-- Total Pipelines: {len(pipelines)}
-- Failed: {len([p for p in pipelines if p.get('status') == 'failed'])}
-- Successful: {len([p for p in pipelines if p.get('status') == 'success'])}
-
-User asks: {prompt}
-
-Provide a brief, helpful DevOps response."""
-        
-        # Create Portia config for local operation
+        # Optimized config - enable tools for Tavily integration
         config = Config(
-            llm_provider="google",
-            enable_tools=True,              # Enable tools including Tavily
+            llm_provider="google",  # Google Gemini
+            enable_tools=True,      # Enable Tavily and other tools
             enable_introspection=False,
-            enable_remote_tools=False,      # Keep remote MCP disabled
-            use_local_mode=True,            # Force local mode to avoid cloud API timeouts
-            timeout=30                      # Shorter timeout for local operation
+            enable_remote_tools=False,  # Disable problematic GitHub MCP tools
+            max_iterations=5,       # Allow complex reasoning
+            timeout=90,             # More time for tool usage
+            api_key=os.getenv('PORTIA_API_KEY')
         )
-        portia = Portia(config=config)
-        
-        # Run simple query
-        result = portia.run(devops_query)
-        
-        # Extract response
-        if hasattr(result.outputs, 'final_output'):
-            if hasattr(result.outputs.final_output, 'value'):
-                response = str(result.outputs.final_output.value)
-            else:
-                response = str(result.outputs.final_output)
-        else:
-            response = "Portia processed your request successfully."
-        
-        return f"🤖 **Portia AI** (Agent Manager)\n\n{response}"
-        
-    except ImportError:
-        print("Portia SDK not available")
-        return get_portia_fallback_response(prompt, selected_repo, pipelines)
+        return Portia(config=config)
     except Exception as e:
-        print(f"Portia SDK error: {e}")
+        print(f"Failed to initialize Portia: {e}")
+        return None
+
+def get_portia_response(prompt, selected_repo, pipelines):
+    """Get response using cached Portia agent with retry"""
+    portia = get_portia_agent()
+    if not portia:
         return get_portia_fallback_response(prompt, selected_repo, pipelines)
+    
+    # Retry mechanism with more attempts
+    for attempt in range(5):  # More retries
+        try:
+            # Rich GitHub context for Portia+Tavily
+            failed_pipelines = [p for p in pipelines if p.get('status') == 'failed']
+            success_count = len([p for p in pipelines if p.get('status') == 'success'])
+            running_count = len([p for p in pipelines if p.get('status') == 'running'])
+            
+            # Build detailed GitHub context
+            github_context = f"""
+GitHub Repository Analysis:
+- Repository: {selected_repo.get('full_name', 'Unknown')}
+- Language: {selected_repo.get('language', 'Unknown')}
+- Total Pipelines: {len(pipelines)}
+- ✅ Successful: {success_count}
+- ❌ Failed: {len(failed_pipelines)}
+- 🔄 Running: {running_count}
+
+Failed Pipeline Details:
+{chr(10).join([f"- {p.get('name', 'Unknown')}: {p.get('error', 'No error details')}" for p in failed_pipelines[:3]])}
+
+Recent Pipeline Activity:
+{chr(10).join([f"- {p.get('name', 'Unknown')}: {p.get('status', 'unknown')} ({p.get('last_run', 'unknown time')})" for p in pipelines[:5]])}
+
+User Question: {prompt}
+
+As a DevOps expert, analyze this GitHub repository data and provide helpful advice. Use Tavily search if you need additional context about DevOps best practices or troubleshooting."""
+            
+            # Run query with cached agent
+            result = portia.run(github_context)
+            
+            # Extract response
+            if hasattr(result.outputs, 'final_output'):
+                if hasattr(result.outputs.final_output, 'value'):
+                    response = str(result.outputs.final_output.value)
+                else:
+                    response = str(result.outputs.final_output)
+            else:
+                response = "Portia processed your request successfully."
+            
+            return f"🤖 **Portia AI** (Agent Manager)\n\n{response}"
+            
+        except Exception as e:
+            print(f"Portia attempt {attempt + 1} failed: {e}")
+            if attempt < 4:  # More retries
+                time.sleep(2 * (attempt + 1))  # Progressive delay
+                continue
+            else:
+                return get_portia_fallback_response(prompt, selected_repo, pipelines)
 
 def get_portia_fallback_response(prompt, selected_repo, pipelines):
     """Portia-style intelligent fallback when API is unavailable"""
